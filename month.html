@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Month</title>
+<style>
+  :root {
+    --bg: #191919;
+    --ink: #e6e6e6;
+    --muted: #7d7d7d;
+    --accent: #7b9bff;
+    --on-accent: #191919;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: var(--bg); }
+  body {
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: var(--ink); display: grid; place-items: center;
+  }
+  .cal {
+    --u: min(calc((100vw - 16px) / 7), calc((100vh - 16px) / 8));
+    width: calc(var(--u) * 7);
+  }
+  .head { height: var(--u); display: flex; align-items: center; justify-content: space-between; }
+  .title {
+    font-size: calc(var(--u) * 0.4); font-weight: 700;
+    background: none; border: 0; color: var(--ink); cursor: pointer; padding: 0 calc(var(--u) * 0.1);
+  }
+  .nav {
+    width: var(--u); height: var(--u); background: none; border: 0; cursor: pointer;
+    color: var(--muted); font-size: calc(var(--u) * 0.5); line-height: 1;
+  }
+  .nav:hover, .title:hover { color: var(--accent); }
+  .nav:focus-visible, .title:focus-visible { outline: 2px solid var(--accent); border-radius: 6px; }
+  .grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+  .dow, .cell {
+    height: var(--u); display: grid; place-items: center;
+    font-size: calc(var(--u) * 0.36); font-variant-numeric: tabular-nums;
+  }
+  .dow { color: var(--muted); font-size: calc(var(--u) * 0.3); }
+  .cell.out { color: var(--muted); opacity: .4; }
+  .cell.today span {
+    width: calc(var(--u) * 0.82); height: calc(var(--u) * 0.82); border-radius: 50%;
+    display: grid; place-items: center;
+    background: var(--accent); color: var(--on-accent); font-weight: 700;
+  }
+</style>
+</head>
+<body>
+  <div class="cal" id="cal"></div>
+<script>
+  const WEEK_START = 1;  // 1 = Monday, 0 = Sunday
+  const LOCALE = "";     // "" = browser language, or e.g. "de-DE"
+  const loc = LOCALE || undefined;
+  let offset = 0;        // months away from the current month
+
+  function render() {
+    const now = new Date();
+    const view = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+    const y = view.getFullYear(), m = view.getMonth();
+    const title = view.toLocaleDateString(loc, { month: "long", year: "numeric" });
+
+    let dows = "";
+    for (let i = 0; i < 7; i++) {
+      const ref = new Date(2024, 0, 1 + ((WEEK_START + i + 6) % 7)); // 2024-01-01 = Monday
+      dows += `<div class="dow">${ref.toLocaleDateString(loc, { weekday: "short" }).slice(0, 2)}</div>`;
+    }
+
+    const lead = (view.getDay() - WEEK_START + 7) % 7;
+    let cells = "";
+    for (let i = 0; i < 42; i++) {
+      const d = new Date(y, m, i - lead + 1);
+      const isToday = d.toDateString() === now.toDateString();
+      const out = d.getMonth() !== m;
+      cells += isToday
+        ? `<div class="cell today"><span>${d.getDate()}</span></div>`
+        : `<div class="cell${out ? " out" : ""}">${d.getDate()}</div>`;
+    }
+
+    document.getElementById("cal").innerHTML = `
+      <div class="head">
+        <button class="nav" data-go="-1" aria-label="Previous month">&#8249;</button>
+        <button class="title" data-go="0" aria-label="Back to this month">${title}</button>
+        <button class="nav" data-go="1" aria-label="Next month">&#8250;</button>
+      </div>
+      <div class="grid">${dows}${cells}</div>`;
+  }
+
+  document.getElementById("cal").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-go]");
+    if (!b) return;
+    const go = Number(b.dataset.go);
+    offset = go === 0 ? 0 : offset + go;
+    render();
+  });
+
+  render();
+
+  function scheduleMidnight() {
+    const n = new Date();
+    const next = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1, 0, 0, 1);
+    setTimeout(() => { render(); scheduleMidnight(); }, next - n);
+  }
+  scheduleMidnight();
+</script>
+</body>
+</html>
