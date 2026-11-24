@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Today</title>
+<style>
+  :root {
+    --ink: #1f2430;
+    --muted: #8a90a0;
+    --accent: #2f5bea;
+    --card: #ffffff;
+    --edge: #e3e6ee;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --ink: #e8eaf0; --muted: #8e94a8; --accent: #7b9bff; --card: #1c2030; --edge: #2c3144; }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: transparent; }
+  body {
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    display: grid; place-items: center; padding: 8px;
+  }
+  .block {
+    width: 100%; max-width: 140px; aspect-ratio: 1;
+    background: var(--card); border: 1px solid var(--edge); border-radius: 14px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; color: var(--ink);
+  }
+  .weekday { font-size: 14px; font-weight: 600; color: var(--accent); }
+  .day { font-size: 56px; font-weight: 700; line-height: 1.05; letter-spacing: -0.03em; }
+  .month { font-size: 13px; color: var(--muted); }
+</style>
+</head>
+<body>
+  <div class="block" id="block"></div>
+<script>
+  // Leave empty to use the browser language, or set e.g. "de-DE" or "en-GB"
+  const LOCALE = "";
+
+  function render() {
+    const now = new Date();
+    const loc = LOCALE || undefined;
+    document.getElementById("block").innerHTML =
+      `<div class="weekday">${now.toLocaleDateString(loc, { weekday: "long" })}</div>
+       <div class="day">${now.getDate()}</div>
+       <div class="month">${now.toLocaleDateString(loc, { month: "long", year: "numeric" })}</div>`;
+  }
+  render();
+
+  function scheduleMidnight() {
+    const n = new Date();
+    const next = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1, 0, 0, 1);
+    setTimeout(() => { render(); scheduleMidnight(); }, next - n);
+  }
+  scheduleMidnight();
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) render(); });
+</script>
+</body>
+</html>
